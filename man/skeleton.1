@@ -1,0 +1,103 @@
+.TH SKELETON 1 "October 2026" "skeleton 26.10.1" "User Commands"
+.SH NAME
+skeleton \- first-hour autopsy for ssh artifacts
+.SH SYNOPSIS
+.B skeleton
+.I command
+.RI [ args ]
+.RI [ flags ]
+.SH DESCRIPTION
+.B skeleton
+reads ssh artifacts from disk \(em keys, authorized_keys files, daemon and
+client configs, known_hosts \- and scores what it finds. read-only, offline,
+single static binary. built for the first hour of incident response on a
+developer machine, when the question is which keys can open the host and
+which of them look planted.
+.SH COMMANDS
+.TP
+.B keys
+.I PATH...
+inventory keys: algorithm, bits, sha256 fingerprint, passphrase state,
+permissions. flags dsa, rsa below 2048 bits, unencrypted identities,
+world-readable private keys.
+.TP
+.B authorized
+.I FILE...
+audit authorized_keys lines: caged vs uncaged keys, forced-command analysis
+(network pullers, interpreter one-liners, proper SSH_ORIGINAL_COMMAND jails),
+from= breadth, option tampering, duplicate keys across files.
+.TP
+.B config
+.I FILE...
+audit sshd_config or ssh_config (auto-detected): relocated
+AuthorizedKeysFile, AuthorizedKeysCommand, PermitEmptyPasswords, weak
+ciphers/kex/macs, StrictHostKeyChecking no, UserKnownHostsFile /dev/null,
+odd Include paths, unknown keywords.
+.TP
+.B known
+.I FILE...
+.RB [ \-\-check
+.IR HOST[,HOST] ]
+audit known_hosts: verify |1| hashed entries by hmac-sha1, list
+cert-authority and @revoked records, catch conflicting keys for the same
+host pattern (torn tofu reset), duplicates, plaintext hostname sprawl.
+.TP
+.B sweep
+.I ROOT...
+.RB [ \-\-fresh
+.IR N ]
+hunt artifacts where they do not belong: authorized_keys outside a .ssh
+directory or /etc/ssh, identities in scratch space (/tmp, /var/tmp,
+/dev/shm, /run), .ssh/rc login hooks, legacy authorized_keys2,
+world-writable .ssh directories, identical authorized_keys planted twice,
+files touched within N days.
+.TP
+.B fp
+.I PATH...
+one fingerprint line per key, for timelines and tickets.
+.SH FLAGS
+.TP
+.B \-\-json
+single-line machine report: tool, version, command, score, band, forced
+flag, findings with id, severity, weight, where, note.
+.TP
+.B \-\-no\-color
+plain output even on a tty.
+.TP
+.B \-\-check
+.B known
+only: verify candidate hostnames against hashed entries.
+.TP
+.B \-\-fresh
+.B sweep
+only: note artifacts modified within the last N days.
+.SH EXIT STATUS
+.TP
+.B 0
+clean (score 0\-9)
+.TP
+.B 1
+watch (10\-29)
+.TP
+.B 2
+suspicious (30\-59)
+.TP
+.B 3
+hostile (60+, or any forced-hostile finding)
+.TP
+.B 64
+usage error
+.SH ENVIRONMENT
+.TP
+.B NO_COLOR
+disable ansi output.
+.TP
+.B SKELETON_FORCE_COLOR
+force ansi output even when redirected.
+.SH FILES
+.I ~/.ssh/authorized_keys, ~/.ssh/authorized_keys2, ~/.ssh/rc,
+/etc/ssh/sshrc, /etc/ssh/sshd_config, ~/.ssh/known_hosts, /etc/ssh/ssh_known_hosts
+.SH SEE ALSO
+ssh(1), sshd(8), ssh-keygen(1)
+.SH LICENSE
+isc
