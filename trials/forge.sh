@@ -5,6 +5,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/fixtures"
 
+# ssh-keygen prompts on existing files; clear the derived set first
+rm -f id_ed25519 id_ed25519.pub id_enc id_enc.pub id_rsa2048 id_rsa2048.pub \
+      id_rsa1024 id_rsa1024.pub id_ecdsa id_ecdsa.pub
+
 ssh-keygen -t ed25519 -N ""      -C "analyst@lab" -f id_ed25519 -q
 ssh-keygen -t ed25519 -N "secretpw" -C "caged@lab" -f id_enc    -q
 ssh-keygen -t rsa     -b 2048  -N ""      -C "old@lab"     -f id_rsa2048 -q
