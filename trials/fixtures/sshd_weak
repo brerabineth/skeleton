@@ -1,0 +1,15 @@
+Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
+PermitEmptyPasswords yes
+AuthorizedKeysFile /var/lib/bits/ak
+AuthorizedKeysCommand /usr/local/bin/fetch-keys %u
+PermitUserEnvironment yes
+Ciphers aes256-cbc,arcfour
+KexAlgorithms diffie-hellman-group1-sha1
+MACs hmac-md5
+X11Forwarding yes
+GatewayPorts yes
+Include /tmp/extra/sshd.conf
+Subsystem sftp internal-sftp
+BogusDirective yes

@@ -1,0 +1,10 @@
+Port 22
+PermitRootLogin no
+PasswordAuthentication no
+PermitEmptyPasswords no
+AuthorizedKeysFile .ssh/authorized_keys .ssh/authorized_keys2
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+KexAlgorithms curve25519-sha256,sntrup761x25519-sha512@openssh.com
+MACs hmac-sha2-256-etm@openssh.com
+X11Forwarding no
+AllowUsers deploy git

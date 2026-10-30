@@ -1,0 +1,8 @@
+Host *
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  ForwardAgent yes
+  ProxyCommand nc -X connect %h %p
+Host bastion
+  HostName 10.0.0.9
+  IdentityFile ~/.ssh/id_ed25519

@@ -1,0 +1,8 @@
+Host bastion
+  HostName 10.0.0.9
+  User deploy
+  IdentityFile ~/.ssh/id_ed25519_bastion
+  StrictHostKeyChecking yes
+Host *
+  HashKnownHosts yes
+  ServerAliveInterval 60
