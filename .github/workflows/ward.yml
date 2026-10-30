@@ -1,0 +1,80 @@
+name: ward
+
+on:
+  push:
+    branches: [main]
+    tags: ['26.*']
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: build
+        run: dotnet build -c Release
+      - name: publish
+        run: dotnet publish -c Release -r linux-x64 --nologo
+      - name: reforge fixtures
+        run: |
+          bash trials/forge.sh
+          git diff --stat
+      - name: end-to-end trials
+        run: trials/run.sh
+
+  carve:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rid: [linux-x64, linux-arm64, osx-arm64, win-x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: publish ${{ matrix.rid }}
+        run: dotnet publish -c Release -r ${{ matrix.rid }} --nologo
+      - name: stage
+        shell: bash
+        run: |
+          out=stage
+          mkdir -p "$out"
+          if [ "${{ matrix.rid }}" = "win-x64" ]; then
+            cp "bin/Release/net8.0/${{ matrix.rid }}/publish/skeleton.exe" "$out/skeleton-${{ matrix.rid }}.exe"
+          else
+            cp "bin/Release/net8.0/${{ matrix.rid }}/publish/skeleton" "$out/skeleton-${{ matrix.rid }}"
+            chmod +x "$out/skeleton-${{ matrix.rid }}"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skeleton-${{ matrix.rid }}
+          path: stage/
+
+  ship:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: carve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: checksums
+        run: |
+          cd dist
+          sha256sum skeleton-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* \
+            --title "skeleton ${{ github.ref_name }}" \
+            --notes "first-hour autopsy for ssh artifacts. self-contained binaries, zero dependencies. checksums in SHA256SUMS.txt."
