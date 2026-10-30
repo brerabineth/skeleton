@@ -76,5 +76,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ github.ref_name }}" dist/* \
+            -R "${{ github.repository }}" \
             --title "skeleton ${{ github.ref_name }}" \
             --notes "first-hour autopsy for ssh artifacts. self-contained binaries, zero dependencies. checksums in SHA256SUMS.txt."
